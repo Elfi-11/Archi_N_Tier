@@ -10,6 +10,10 @@ function Quiz() {
     const [selectedTheme, setSelectedTheme] = useState(null);
     const [themes, setThemes] = useState([]);
     const [answerColors, setAnswerColors] = useState({});
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [countdown, setCountdown] = useState(null);
+    const [countchrono, setCountchrono] = useState(null);   
+    
 
     useEffect(() => {
         socket.on('connect', () => {
@@ -24,11 +28,28 @@ function Quiz() {
             setThemes(data);
         });
 
+        return () => {
+            socket.off('connect');
+            socket.off('themes');
+        };            
+
+    }, []);
+
+    useEffect(() => {
         socket.on('questions', (data) => {
             console.log('Questions reçues:', data);
+            console.log('Nombre de questions reçues:', data.length);
             setQuestions(data);
+            setCurrentQuestionIndex(0);
+            setCountchrono(10);
         });
 
+        return () => {
+            socket.off('questions');
+        };
+    }, [questions]);
+
+    useEffect(() => {
         socket.on('answerResult', (result) => {
             console.log('Résultat reçu:', result);
             console.log('Question ID:', result.questionId);
@@ -46,20 +67,53 @@ function Quiz() {
                 console.log('Nouveau state answerColors:', newColors);
                 return newColors;
             });
+
+            console.log('Index actuel:', currentQuestionIndex);
+            console.log('Nombre total de questions:', questions.length);
+
+            if (currentQuestionIndex <= questions.length - 1) {
+                setCountdown(1);
+            } else {
+                alert('Quiz terminé !');
+            }
         });
 
         return () => {
-            socket.off('connect');
-            socket.off('themes');
-            socket.off('questions');
             socket.off('answerResult');
         };
-    }, []);
+    }, [questions, currentQuestionIndex]);
+
+    useEffect(() => {
+        if (countdown > 0) {
+            const timer = setInterval(() => {
+                setCountdown(prev => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        } else if (countdown === 0) {
+            if (!questions.length) {
+                socket.emit('requestQuestions', { themeId: selectedTheme });
+            } else {
+                setCurrentQuestionIndex(prev => prev + 1);
+                setCountchrono(10);
+            }
+        }
+    }, [countdown, selectedTheme, questions]);
+
+    useEffect(() => {
+        if (countchrono > 0) {
+            const timer = setInterval(() => {
+                setCountchrono(prev => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        } else if (countchrono === 0) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        }
+    }, [countchrono]);
 
     const handleThemeSelect = (themeId) => {
         console.log('Thème sélectionné:', themeId);
         setSelectedTheme(themeId);
-        socket.emit('requestQuestions', { themeId });
+        setCountdown(3);
     };
 
     const handleAnswer = (questionId, answer) => {
@@ -107,29 +161,58 @@ function Quiz() {
             )}
 
             {/* Questions */}
-            {selectedTheme && questions.map(question => (
-                <Card key={question.id} className="my-4">
-                    <CardBody>
-                        <h3 className="text-xl font-bold mb-4">{question.question}</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            {[1, 2, 3, 4].map((num) => (
-                                <Button
-                                    key={num}
-                                    onPress={() => handleAnswer(question.id, num)}
-                                    isDisabled={answerColors[question.id] !== undefined}
-                                    color={answerColors[question.id]?.answeredButton === num 
-                                        ? answerColors[question.id]?.color 
-                                        : "default"
-                                    }
-                                    className="w-full"
-                                >
-                                    {question[`reponse${num}`]}
-                                </Button>
-                            ))}
+            {selectedTheme && questions[currentQuestionIndex] && (
+                <>
+                    <Card key={questions[currentQuestionIndex].id} className="my-4">
+                        <CardBody>
+                            <h3 className="text-xl font-bold mb-4">{questions[currentQuestionIndex].question}</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {[1, 2, 3, 4].map((num) => (
+                                    <Button
+                                        key={num}
+                                        onPress={() => handleAnswer(questions[currentQuestionIndex].id, num)}
+                                        isDisabled={answerColors[questions[currentQuestionIndex].id] !== undefined}
+                                        color={answerColors[questions[currentQuestionIndex].id]?.answeredButton === num 
+                                            ? answerColors[questions[currentQuestionIndex].id]?.color 
+                                            : "default"
+                                        }
+                                        className="w-full"
+                                    >
+                                        {questions[currentQuestionIndex][`reponse${num}`]}
+                                    </Button>
+                                ))}
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    {countchrono > 0 && questions.length > 0 && (
+                        <div className="flex justify-center items-center mt-[50px]">
+                            <Badge 
+                                content={countchrono} 
+                                size="lg"
+                                color="primary"
+                                className="text-4xl p-6"
+                                variant="shadow"
+                            >
+                            </Badge>
                         </div>
-                    </CardBody>
-                </Card>
-            ))}
+                    )}
+                </>
+            )}
+
+            {/* Décompte initial (3,2,1) */}
+            {countdown > 0 && !questions.length && (
+                <div className="flex justify-center items-center min-h-[200px]">
+                    <Badge 
+                        content={countdown} 
+                        size="lg"
+                        color="primary"
+                        className="text-6xl p-8"
+                        variant="shadow"
+                    >
+                    </Badge>
+                </div>
+            )}
         </div>
     );
 }

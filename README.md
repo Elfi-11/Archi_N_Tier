@@ -1,50 +1,52 @@
-# Archi_N_Tier - Quiz Application
+# Quiz en Temps Réel
 
-Par Marina Estanco
+## Description
+Application de quiz en temps réel permettant aux utilisateurs de répondre à des questions sur différents thèmes. Les réponses sont évaluées instantanément et les scores sont calculés en fonction du temps de réponse.
 
-## 📝 Description
-Une application de quiz interactive en temps réel construite avec une architecture N-tiers moderne. Cette application permet aux utilisateurs de participer à des quiz avec des questions à choix multiples, avec des mises à jour en temps réel grâce à Socket.IO.
+## Stack Technique
 
-## 🛠 Technologies Utilisées
-- **Backend**
-  - Node.js
-  - Express.js
-  - SQLite (avec Knex.js)
-  - Socket.IO
-- **Frontend**
-  - React.js
-  - Socket.IO-client
-  - CSS Modules
+### Frontend (Port 3000)
+- **React** : Bibliothèque JavaScript pour construire l'interface utilisateur
+  - Gère l'état de l'application avec useState et useEffect
+  - Affiche les questions et réponses de manière dynamique
+  - Gère l'interaction utilisateur et les événements
+  - Communique avec le backend via Socket.IO Client
 
-## 🚀 Fonctionnalités
-- Quiz interactif en temps réel
-- Questions à choix multiples
-- Feedback instantané sur les réponses
-- Système de score
-- Interface utilisateur responsive
+### Backend (Port 3001)
+- **Socket.IO** : Bibliothèque pour la communication en temps réel
+  - Permet la communication bidirectionnelle client-serveur
+  - Gère les événements en temps réel :
+    * Connexion/déconnexion des joueurs
+    * Envoi des questions
+    * Réception des réponses
+    * Mise à jour des scores
+  - Maintient une connexion persistante avec les clients
 
-## 📋 Prérequis
-- Node.js (v14 ou supérieure)
-- npm (v6 ou supérieure)
-- Git
+### Base de données
+- **SQLite** avec **better-sqlite3**
+  - Base de données SQL légère et sans serveur
+  - Stocke :
+    * Questions et réponses
+    * Thèmes des questions
+    * Scores (optionnel)
+  - Avantages :
+    * Pas de serveur de base de données séparé
+    * Fichier unique facile à sauvegarder
+    * Performances optimales pour les petites applications
 
-## 📁 Structure du Projet
-```
-Archi_N_Tier/
-├── back/                  # Backend
-│   ├── database/         # Base de données SQLite et migrations
-│   │   ├── migrations/   # Fichiers de migration Knex
-│   │   └── seeds/       # Données de test
-│   ├── models/          # Modèles de données
-│   ├── app.js           # Configuration de l'application
-│   ├── index.js         # Point d'entrée
-│   └── knexfile.js      # Configuration de Knex
-└── front/               # Frontend React
-    ├── public/          # Fichiers statiques
-    └── src/             # Code source React
-        ├── components/  # Composants React
-        └── styles/     # Fichiers CSS
-```
+### ORM et Middleware
+- **Knex.js** : Query builder SQL
+  - Gère les migrations de base de données :
+    * Création des tables
+    * Modifications de structure
+  - Simplifie les requêtes SQL avec une API JavaScript
+  - Permet le seeding des données de test
+  - Organise la structure de la base de données
+
+- **CORS** : Middleware de sécurité
+  - Permet la communication cross-origin entre frontend et backend
+  - Configure les autorisations d'accès HTTP
+  - Essentiel car frontend (3000) et backend (3001) sur des ports différents
 
 ## 🔧 Installation
 
