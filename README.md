@@ -1,60 +1,108 @@
-# Archi_N_Tier
+# Archi_N_Tier - Quiz Application
 
 Par Marina Estanco
 
-## Description
-Ce projet est une application de quiz construite avec Node.js pour le backend, Express pour la gestion des requêtes HTTP, SQLite comme base de données, et React pour le frontend. 
+## 📝 Description
+Une application de quiz interactive en temps réel construite avec une architecture N-tiers moderne. Cette application permet aux utilisateurs de participer à des quiz avec des questions à choix multiples, avec des mises à jour en temps réel grâce à Socket.IO.
 
-## Prérequis
-Assurez-vous d'avoir installé les éléments suivants sur votre machine :
+## 🛠 Technologies Utilisées
+- **Backend**
+  - Node.js
+  - Express.js
+  - SQLite (avec Knex.js)
+  - Socket.IO
+- **Frontend**
+  - React.js
+  - Socket.IO-client
+  - CSS Modules
 
-- [Node.js](https://nodejs.org/) (version 14 ou supérieure)
-- [npm](https://www.npmjs.com/) (installé avec Node.js)
-- [Git](https://git-scm.com/) (pour la gestion du code source)
+## 🚀 Fonctionnalités
+- Quiz interactif en temps réel
+- Questions à choix multiples
+- Feedback instantané sur les réponses
+- Système de score
+- Interface utilisateur responsive
 
-## Structure du projet
+## 📋 Prérequis
+- Node.js (v14 ou supérieure)
+- npm (v6 ou supérieure)
+- Git
 
-Archi_N_Tier/ ├── back/ # Dossier pour le backend │ 
-                  ├── app.js # Point d'entrée de l'application backend │ 
-              ├── package.json # Dépendances du backend 
-              │ └── ... # Autres fichiers et dossiers backend 
-              ├── front/ # Dossier pour le frontend │ 
-                  ├── src/ # Dossier source de l'application React │ 
-                  ├── public/ # Dossier public de l'application React │ 
-              ├── package.json # Dépendances du frontend │ 
-                  └── ... # Autres fichiers et dossiers frontend 
-              └── .gitignore # Fichier pour ignorer les fichiers non suivis
+## 📁 Structure du Projet
+```
+Archi_N_Tier/
+├── back/                  # Backend
+│   ├── database/         # Base de données SQLite et migrations
+│   │   ├── migrations/   # Fichiers de migration Knex
+│   │   └── seeds/       # Données de test
+│   ├── models/          # Modèles de données
+│   ├── app.js           # Configuration de l'application
+│   ├── index.js         # Point d'entrée
+│   └── knexfile.js      # Configuration de Knex
+└── front/               # Frontend React
+    ├── public/          # Fichiers statiques
+    └── src/             # Code source React
+        ├── components/  # Composants React
+        └── styles/     # Fichiers CSS
+```
 
-
-## Installation
+## 🔧 Installation
 
 ### Backend
+```bash
+# Naviguer vers le dossier backend
+cd back
 
-1. Ouvrez un terminal dans le dossier `back`.
-2. Installez les dépendances :
+# Installer les dépendances
+npm install
 
-   ```bash
-   npm install
+# Configurer la base de données
+npx knex migrate:latest
+npx knex seed:run
 
-3. Démarer le back : 
-   ```bash
-   npm start
-
-
-## Installation
+# Démarrer le serveur
+npm start
+```
 
 ### Frontend
+```bash
+# Naviguer vers le dossier frontend
+cd front
 
-1. Ouvrez un terminal dans le dossier `frontend`.
-2. Installez les dépendances :
+# Installer les dépendances
+npm install
 
-   ```bash
-   npm install
+# Démarrer l'application React
+npm start
+```
 
-3. Démarer le front : 
-   ```bash
-   npm start
+## 🌐 Utilisation
+1. Ouvrez votre navigateur et accédez à `http://localhost:3000`
+2. L'API backend est accessible sur `http://localhost:3001`
+3. Les endpoints disponibles :
+   - GET `/api/questions` : Liste toutes les questions
+   - GET `/api/questions/:id` : Récupère une question spécifique
 
+## 🔌 Socket.IO Events
+- `connection` : Établit la connexion avec le serveur
+- `requestQuestions` : Demande la liste des questions
+- `submitAnswer` : Soumet une réponse
+- `answerResult` : Reçoit le résultat d'une réponse
 
-## Utilisation
-Une fois le backend et le frontend en cours d'exécution, vous pouvez interagir avec l'application en ouvrant votre navigateur à l'adresse du frontend. Les requêtes envoyées par le frontend seront traitées par le backend, qui interagira avec la base de données SQLite pour stocker et récupérer les données.
+## 🤝 Contribution
+Les contributions sont les bienvenues ! Pour contribuer :
+1. Forkez le projet
+2. Créez une branche pour votre fonctionnalité
+3. Committez vos changements
+4. Poussez vers la branche
+5. Ouvrez une Pull Request
+
+## 📝 License
+Ce projet est sous licence ISC.
+
+## 📞 Contact
+Marina Estanco - [GitHub](https://github.com/Elfi-11)
+
+## 🙏 Remerciements
+- Merci à tous les contributeurs
+- Inspiré par les meilleures pratiques de développement web moderne

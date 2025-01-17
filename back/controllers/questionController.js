@@ -1,5 +1,4 @@
 const Questions = require('../models/questions');
-const Themes = require('../models/themes');
 
 const questionController = {
     getAllQuestions: async (req, res) => {

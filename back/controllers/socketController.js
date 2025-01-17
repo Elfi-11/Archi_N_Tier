@@ -1,5 +1,6 @@
 const questionController = require('./questionController');
 const themeController = require('./themeController');
+const Questions = require('../models/questions');
 
 const socketController = (io) => {
     io.on('connection', (socket) => {
@@ -17,7 +18,7 @@ const socketController = (io) => {
 
         socket.on('requestQuestions', async ({ themeId }) => {
             try {
-                const questions = await themeController.getQuestionsByTheme(themeId);
+                const questions = await questionController.getQuestionsByThemeId(themeId);
                 socket.emit('questions', questions);
             } catch (error) {
                 console.error('Error fetching questions:', error);
@@ -29,7 +30,8 @@ const socketController = (io) => {
                 const isCorrect = await questionController.checkAnswer(questionId, answer);
                 socket.emit('answerResult', {
                     correct: isCorrect,
-                    questionId: questionId
+                    questionId: questionId,
+                    answer: answer
                 });
             } catch (error) {
                 console.error('Error checking answer:', error);
