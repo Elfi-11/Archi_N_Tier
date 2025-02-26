@@ -16,7 +16,6 @@ function Quiz() {
     const [userName, setUserName] = useState('');
     const [roomCode, setRoomCode] = useState('');
     const [isHost, setIsHost] = useState(false);
-    const [players, setPlayers] = useState([]);
     const [themes, setThemes] = useState([]);
     const [selectedTheme, setSelectedTheme] = useState(null);
     const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -26,19 +25,20 @@ function Quiz() {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [answerResult, setAnswerResult] = useState(null);
     const [timeLeft, setTimeLeft] = useState(10);
+    const [currentPlayers, setCurrentPlayers] = useState([]);
 
     // Handlers
     const handleAnswer = useCallback((answer) => {
         if (selectedAnswer !== null || !currentQuestion) return;
         setSelectedAnswer(answer);
-        socket.emit('submitAnswer', {
-            questionId: currentQuestion.id,
-            answer
+        socket.emit('submitAnswer', { 
+            questionId: currentQuestion.id, 
+            answer,
+            roomCode 
         });
-    }, [currentQuestion, selectedAnswer]);
+    }, [currentQuestion, selectedAnswer, roomCode]);
 
     const handleThemeSelect = useCallback((themeId) => {
-        console.log('Sélection du thème:', themeId);
         setSelectedTheme(themeId);
         socket.emit('requestQuestions', { themeId });
     }, []);
@@ -48,29 +48,47 @@ function Quiz() {
             setError('Veuillez sélectionner un thème');
             return;
         }
-        console.log('Démarrage du jeu avec le thème:', selectedTheme);
-        socket.emit('startGame', { themeId: selectedTheme });
-    }, [selectedTheme]);
+        socket.emit('startGame', { themeId: selectedTheme, roomCode });
+    }, [selectedTheme, roomCode]);
+
+    const handleJoinRoom = useCallback(() => {
+        const cleanRoomCode = roomCode.trim();
+        if (!cleanRoomCode) {
+            setError('Code de salle invalide');
+            return;
+        }
+        socket.emit('joinRoom', { userName, roomCode: cleanRoomCode, isHost: false });
+        setGameState('waiting');
+    }, [userName, roomCode]);
+
+    const handleCreateRoom = useCallback(() => {
+        const newCode = Math.random().toString(36).substring(7).toUpperCase();
+        setRoomCode(newCode);
+        setIsHost(true);
+        socket.emit('joinRoom', { userName, roomCode: newCode, isHost: true });
+        setGameState('waiting');
+    }, [userName]);
 
     // Effets
     useEffect(() => {
-        socket.on('connect', () => {
-            console.log('Connecté au serveur socket');
-            setConnected(true);
-            socket.emit('requestThemes');
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Déconnecté du serveur socket');
-            setConnected(false);
-        });
-
+        socket.on('connect', () => setConnected(true));
+        socket.on('disconnect', () => setConnected(false));
+        
         socket.on('themes', (receivedThemes) => {
-            console.log('Thèmes reçus du serveur:', receivedThemes);
             if (Array.isArray(receivedThemes) && receivedThemes.length > 0) {
                 setThemes(receivedThemes);
-            } else {
-                console.warn('Pas de thèmes reçus ou format incorrect');
+            }
+        });
+
+        socket.on('playerUpdate', (players) => {
+            if (Array.isArray(players)) {
+                setCurrentPlayers(players);
+            }
+        });
+
+        socket.on('joinConfirmed', (data) => {
+            if (data.players) {
+                setCurrentPlayers(data.players);
             }
         });
 
@@ -78,6 +96,35 @@ function Quiz() {
             socket.off('connect');
             socket.off('disconnect');
             socket.off('themes');
+            socket.off('playerUpdate');
+            socket.off('joinConfirmed');
+        };
+    }, []);
+
+    useEffect(() => {
+        socket.on('gameStarted', ({ questions, total }) => {
+            setGameState('playing');
+            setCurrentQuestion(questions);
+            setTotalQuestions(total);
+        });
+
+        socket.on('error', (message) => {
+            console.error('❌', message);
+            setError(message);
+        });
+
+        socket.on('nextQuestion', ({ question, index }) => {
+            setCurrentQuestion(question);
+            setQuestionIndex(index);
+            setSelectedAnswer(null);
+            setAnswerResult(null);
+            setTimeLeft(10);
+        });
+
+        return () => {
+            socket.off('gameStarted');
+            socket.off('error');
+            socket.off('nextQuestion');
         };
     }, []);
 
@@ -94,46 +141,6 @@ function Quiz() {
 
         return () => socket.off('answerResult');
     }, [userName]);
-
-    useEffect(() => {
-        socket.on('gameStarted', ({ questions, total }) => {
-            console.log('Jeu démarré avec', total, 'questions');
-            setGameState('playing');
-            setCurrentQuestion(questions);
-            setTotalQuestions(total);
-        });
-
-        socket.on('error', (message) => {
-            console.error('Erreur reçue:', message);
-            setError(message);
-        });
-
-        socket.on('nextQuestion', ({ question, index }) => {
-            setCurrentQuestion(question);
-            setQuestionIndex(index);
-            setSelectedAnswer(null);
-            setAnswerResult(null);
-            setTimeLeft(10);
-        });
-
-        socket.on('playerJoined', (playersList) => {
-            console.log('Joueur rejoint:', playersList);
-            setPlayers(playersList);
-        });
-
-        socket.on('playerLeft', (playersList) => {
-            console.log('Joueur parti:', playersList);
-            setPlayers(playersList);
-        });
-
-        return () => {
-            socket.off('gameStarted');
-            socket.off('error');
-            socket.off('nextQuestion');
-            socket.off('playerJoined');
-            socket.off('playerLeft');
-        };
-    }, []);
 
     useEffect(() => {
         let timer;
@@ -163,8 +170,8 @@ function Quiz() {
                     placeholder="Nom d'utilisateur" 
                 />
                 <Button 
-                    className="mt-4"
-                    onPress={() => setGameState('setup')}
+                    className="mt-4" 
+                    onPress={() => setGameState('setup')} 
                     disabled={!userName.trim()}
                 >
                     Continuer
@@ -178,31 +185,21 @@ function Quiz() {
             <CardBody>
                 <h2>Configuration de la partie</h2>
                 <div className="flex gap-4 my-4">
-                    <Button 
-                        color="primary"
-                        onPress={() => {
-                            const newCode = Math.random().toString(36).substring(7).toUpperCase();
-                            setRoomCode(newCode);
-                            setIsHost(true);
-                            setGameState('waiting');
-                        }}
-                    >
+                    <Button color="primary" onPress={handleCreateRoom}>
                         Créer une partie
                     </Button>
                     <div className="flex-1">
-                        <Input
-                            label="Code de la partie"
-                            value={roomCode}
-                            onChange={(e) => setRoomCode(e.target.value)}
+                        <Input 
+                            label="Code de la partie" 
+                            value={roomCode} 
+                            onChange={(e) => setRoomCode(e.target.value.trim())} 
+                            placeholder="Entrez le code" 
                         />
                     </div>
                     <Button 
-                        color="secondary"
-                        onPress={() => {
-                            if (roomCode) {
-                                setGameState('waiting');
-                            }
-                        }}
+                        color="secondary" 
+                        onPress={handleJoinRoom} 
+                        disabled={!roomCode.trim()}
                     >
                         Rejoindre
                     </Button>
@@ -217,26 +214,40 @@ function Quiz() {
                 <h2 className="text-2xl mb-4">Salle d'attente</h2>
                 <div className="bg-gray-100 p-4 rounded my-4">
                     <p>Code de la partie : {roomCode}</p>
+                    <p>Votre nom : {userName}</p>
+                    <p>Statut : {isHost ? 'Hôte' : 'Joueur'}</p>
                 </div>
-
-                {isHost && (
-                    <div className="my-4">
+                <div className="mt-4">
+                    <h3 className="text-xl mb-2">Joueurs connectés ({currentPlayers.length}):</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        {currentPlayers.map((player) => (
+                            <Badge 
+                                key={player.id} 
+                                color={player.isHost ? "primary" : "default"} 
+                                className="p-2"
+                            >
+                                {player.name} {player.isHost ? "(Hôte)" : ""}
+                            </Badge>
+                        ))}
+                    </div>
+                </div>
+                {isHost && themes && themes.length > 0 ? (
+                    <div className="mt-4">
                         <h3 className="text-xl mb-2">Sélectionner un thème :</h3>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            {Array.isArray(themes) && themes.map((theme) => (
+                        <div className="grid grid-cols-2 gap-4">
+                            {themes.map((theme) => (
                                 <Button
                                     key={theme.id}
                                     color={selectedTheme === theme.id ? "primary" : "default"}
                                     onPress={() => handleThemeSelect(theme.id)}
-                                    className="text-center p-4"
+                                    className="p-4"
                                 >
                                     {theme.nom_theme}
                                 </Button>
                             ))}
                         </div>
-
-                        <Button 
-                            color="primary"
+                        <Button
+                            color="success"
                             className="mt-4 w-full"
                             onPress={handleStartGame}
                             disabled={!selectedTheme}
@@ -244,18 +255,9 @@ function Quiz() {
                             Démarrer la partie
                         </Button>
                     </div>
-                )}
-
-                <div className="mt-4">
-                    <h3 className="text-xl mb-2">Joueurs connectés :</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        {players.map((player, index) => (
-                            <Badge key={index} color={player.isHost ? "primary" : "default"}>
-                                {player.name} {player.isHost && "(Hôte)"}
-                            </Badge>
-                        ))}
-                    </div>
-                </div>
+                ) : isHost ? (
+                    <div>Chargement des thèmes...</div>
+                ) : null}
             </CardBody>
         </Card>
     );
@@ -265,7 +267,10 @@ function Quiz() {
             <CardBody>
                 <div className="flex justify-between items-center mb-4">
                     <Badge content={`Question ${questionIndex + 1}/${totalQuestions}`} />
-                    <Badge content={`Temps: ${timeLeft}s`} color={timeLeft < 5 ? "danger" : "primary"} />
+                    <Badge 
+                        content={`Temps: ${timeLeft}s`} 
+                        color={timeLeft < 5 ? "danger" : "primary"} 
+                    />
                     <Badge content={`Score: ${scores[userName] || 0}`} />
                 </div>
                 {currentQuestion && (
@@ -275,9 +280,10 @@ function Quiz() {
                             {[1, 2, 3, 4].map((num) => (
                                 <Button
                                     key={num}
-                                    color={answerResult?.answer === num ? 
-                                        (answerResult.correct ? "success" : "danger") 
-                                        : "default"}
+                                    color={answerResult?.answer === num 
+                                        ? (answerResult.correct ? "success" : "danger") 
+                                        : "default"
+                                    }
                                     onPress={() => handleAnswer(num)}
                                     disabled={selectedAnswer !== null}
                                 >

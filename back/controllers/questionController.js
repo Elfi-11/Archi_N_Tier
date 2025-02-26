@@ -1,12 +1,11 @@
 const Questions = require('../models/questions');
 
 const questionController = {
-    getAllQuestions: async (req, res) => {
+    getAllQuestions: async () => {
         try {
-            const questions = await Questions.getAllQuestions();
-            return questions;
+            return await Questions.getAllQuestions();
         } catch (error) {
-            console.error('Error fetching questions:', error);
+            console.error('❌ Erreur getAllQuestions:', error);
             throw error;
         }
     },
@@ -21,22 +20,20 @@ const questionController = {
         }
     },
 
-    getQuestionsByThemeId: async (themeid) => {
+    getQuestionsByThemeId: async (themeId) => {
         try {
-            const questions = await Questions.getQuestionsByThemeId(themeid);
-            return questions;
+            return await Questions.getQuestionsByThemeId(themeId);
         } catch (error) {
-            console.error('Error fetching questions by theme:', error);
+            console.error('❌ Erreur getQuestionsByThemeId:', error);
             throw error;
         }
     },
 
     checkAnswer: async (questionId, answer) => {
         try {
-            const question = await Questions.getQuestionById(questionId);
-            return question.bonne_reponse === answer;
+            return await Questions.checkAnswer(questionId, answer);
         } catch (error) {
-            console.error('Error checking answer:', error);
+            console.error('❌ Erreur checkAnswer:', error);
             throw error;
         }
     }

@@ -1,25 +1,24 @@
 const db = require('../app');
 
 module.exports = {
-// Récupérer toutes les themes
+// Récupérer tous les thèmes
 async getAllThemes() {
     try {
-        console.log('Tentative de récupération des thèmes...');
-        const themes = await db('themes').select('*');
-        console.log('Thèmes récupérés de la BD:', themes);
-        return themes;
+        return await db('themes').select('*');
     } catch (error) {
-        console.error('Erreur dans getAllThemes:', error);
+        console.error('❌ Erreur BD getAllThemes:', error);
         throw error;
     }
 },
 
 // Récupérer une theme par son ID
 async getThemeById(id) {
-    console.log('Recherche du thème:', id);
-    const theme = await db('themes').where({ id }).first();
-    console.log('Thème trouvé:', theme);
-    return theme;
+    try {
+        return await db('themes').where({ id }).first();
+    } catch (error) {
+        console.error('❌ Erreur BD getThemeById:', error);
+        throw error;
+    }
 },
 
 // Ajouter une nouvelle theme

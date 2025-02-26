@@ -3,20 +3,18 @@ const Themes = require('../models/themes');
 const themeController = {
     getAllThemes: async () => {
         try {
-            const themes = await Themes.getAllThemes();
-            return themes;
+            return await Themes.getAllThemes();
         } catch (error) {
-            console.error('Error fetching themes:', error);
+            console.error('❌ Erreur getAllThemes:', error);
             throw error;
         }
     },
 
-    getThemeById: async (themeId) => {
+    getThemeById: async (id) => {
         try {
-            const theme = await Themes.getThemeById(themeId);
-            return theme;
+            return await Themes.getThemeById(id);
         } catch (error) {
-            console.error('Error fetching theme by id:', error);
+            console.error('❌ Erreur getThemeById:', error);
             throw error;
         }
     }
