@@ -1,32 +1,25 @@
 const express = require('express');
 const http = require('http');
-const socketIO = require('socket.io');
+const { Server } = require('socket.io');
 const cors = require('cors');
-const apiRoutes = require('./routes/api');
 const socketController = require('./controllers/socketController');
 
 const app = express();
+app.use(cors());
+
 const server = http.createServer(app);
-const io = socketIO(server, {
+const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
+        origin: ["http://localhost:3000", "http://localhost:5173"], // Autoriser les deux ports
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Routes
-app.use('/api', apiRoutes);
-
-
+// Initialiser le contrôleur socket
 socketController(io);
 
-// run serv
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
     console.log(`Serveur démarré sur le port ${PORT}`);
-    console.log(`Test l'API à http://localhost:${PORT}`);
 });

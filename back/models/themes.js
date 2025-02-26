@@ -2,13 +2,24 @@ const db = require('../app');
 
 module.exports = {
 // Récupérer toutes les themes
-getAllThemes() {
-    return db('themes').select('*');
+async getAllThemes() {
+    try {
+        console.log('Tentative de récupération des thèmes...');
+        const themes = await db('themes').select('*');
+        console.log('Thèmes récupérés de la BD:', themes);
+        return themes;
+    } catch (error) {
+        console.error('Erreur dans getAllThemes:', error);
+        throw error;
+    }
 },
 
 // Récupérer une theme par son ID
-getThemeById(id) {
-    return db('themes').where({ id }).first();
+async getThemeById(id) {
+    console.log('Recherche du thème:', id);
+    const theme = await db('themes').where({ id }).first();
+    console.log('Thème trouvé:', theme);
+    return theme;
 },
 
 // Ajouter une nouvelle theme

@@ -74,6 +74,10 @@ cd front
 # Installer les dépendances
 npm install
 
+# Installer Nextui et Tailwind
+npm install @nextui-org/react framer-motion
+npm install -D tailwindcss postcss autoprefixer
+
 # Démarrer l'application React
 npm start
 ```

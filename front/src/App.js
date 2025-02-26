@@ -4,7 +4,7 @@ import Quiz from './components/Quiz';
 function App() {
   return (
     <NextUIProvider>
-      <Quiz />
+      <Quiz/>
     </NextUIProvider>
   );
 }

@@ -2,17 +2,39 @@ const questionController = require('./questionController');
 const themeController = require('./themeController');
 const Questions = require('../models/questions');
 
-const socketController = (io) => {
+module.exports = (io) => {
     io.on('connection', (socket) => {
-        console.log('Un client s\'est connecté:', socket.id);
+        console.log('Un client est connecté');
 
         socket.on('requestThemes', async () => {
             try {
                 const themes = await themeController.getAllThemes();
                 socket.emit('themes', themes);
-                console.log('Thèmes envoyés au client');
             } catch (error) {
-                console.error('Error fetching themes:', error);
+                console.error('Erreur lors de la récupération des thèmes:', error);
+                socket.emit('error', 'Erreur lors de la récupération des thèmes');
+            }
+        });
+
+        socket.on('startGame', async ({ themeId }) => {
+            try {
+                console.log('Démarrage du jeu avec le thème:', themeId);
+                const questions = await questionController.getQuestionsByTheme(themeId);
+                
+                if (!questions || questions.length === 0) {
+                    socket.emit('error', 'Aucune question trouvée pour ce thème');
+                    return;
+                }
+
+                socket.emit('gameStarted', {
+                    questions: questions[0],
+                    total: questions.length
+                });
+                
+                io.to(socket.roomId).emit('gameState', 'playing');
+            } catch (error) {
+                console.error('Erreur lors du démarrage du jeu:', error);
+                socket.emit('error', 'Erreur lors du démarrage du jeu');
             }
         });
 
@@ -39,9 +61,7 @@ const socketController = (io) => {
         });
 
         socket.on('disconnect', () => {
-            console.log('Client déconnecté:', socket.id);
+            console.log('Un client s\'est déconnecté');
         });
     });
 };
-
-module.exports = socketController;

@@ -13,10 +13,13 @@ module.exports = {
     return db('questions').insert(question);
   },
 
-  getQuestionsByThemeId(themeId) {
-    return db('questions')
-        .where('theme_id', themeId)
-        .select('*');
+  async getQuestionsByThemeId(themeId) {
+    console.log('Recherche des questions pour le thème:', themeId);
+    const query = db('questions').where('theme_id', themeId).select('*');
+    console.log('Requête SQL:', query.toString()); // Log de la requête SQL
+    const results = await query;
+    console.log('Résultats:', results);
+    return results;
   },
 
   

@@ -1,220 +1,315 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
-import { Button, Card, CardBody, Badge } from "@nextui-org/react";
+import { Button, Card, CardBody, Badge, Input } from "@nextui-org/react";
+import '../style/quiz.css';
 
-const socket = io('http://localhost:3001');
+const socket = io('http://localhost:3001', {
+    withCredentials: true,
+    transports: ['websocket', 'polling']
+});
 
 function Quiz() {
-    const [questions, setQuestions] = useState([]);
+    // États
     const [connected, setConnected] = useState(false);
-    const [selectedTheme, setSelectedTheme] = useState(null);
+    const [error, setError] = useState(null);
+    const [gameState, setGameState] = useState('login');
+    const [userName, setUserName] = useState('');
+    const [roomCode, setRoomCode] = useState('');
+    const [isHost, setIsHost] = useState(false);
+    const [players, setPlayers] = useState([]);
     const [themes, setThemes] = useState([]);
-    const [answerColors, setAnswerColors] = useState({});
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [countdown, setCountdown] = useState(null);
-    const [countchrono, setCountchrono] = useState(null);   
-    
+    const [selectedTheme, setSelectedTheme] = useState(null);
+    const [currentQuestion, setCurrentQuestion] = useState(null);
+    const [questionIndex, setQuestionIndex] = useState(0);
+    const [totalQuestions, setTotalQuestions] = useState(0);
+    const [scores, setScores] = useState({});
+    const [selectedAnswer, setSelectedAnswer] = useState(null);
+    const [answerResult, setAnswerResult] = useState(null);
+    const [timeLeft, setTimeLeft] = useState(10);
 
+    // Handlers
+    const handleAnswer = useCallback((answer) => {
+        if (selectedAnswer !== null || !currentQuestion) return;
+        setSelectedAnswer(answer);
+        socket.emit('submitAnswer', {
+            questionId: currentQuestion.id,
+            answer
+        });
+    }, [currentQuestion, selectedAnswer]);
+
+    const handleThemeSelect = useCallback((themeId) => {
+        console.log('Sélection du thème:', themeId);
+        setSelectedTheme(themeId);
+        socket.emit('requestQuestions', { themeId });
+    }, []);
+
+    const handleStartGame = useCallback(() => {
+        if (!selectedTheme) {
+            setError('Veuillez sélectionner un thème');
+            return;
+        }
+        console.log('Démarrage du jeu avec le thème:', selectedTheme);
+        socket.emit('startGame', { themeId: selectedTheme });
+    }, [selectedTheme]);
+
+    // Effets
     useEffect(() => {
         socket.on('connect', () => {
-            console.log('Connecté au serveur');
+            console.log('Connecté au serveur socket');
             setConnected(true);
             socket.emit('requestThemes');
-            console.log('Thèmes demandés');
         });
 
-        socket.on('themes', (data) => {
-            console.log('Thèmes reçus:', data);
-            setThemes(data);
+        socket.on('disconnect', () => {
+            console.log('Déconnecté du serveur socket');
+            setConnected(false);
+        });
+
+        socket.on('themes', (receivedThemes) => {
+            console.log('Thèmes reçus du serveur:', receivedThemes);
+            if (Array.isArray(receivedThemes) && receivedThemes.length > 0) {
+                setThemes(receivedThemes);
+            } else {
+                console.warn('Pas de thèmes reçus ou format incorrect');
+            }
         });
 
         return () => {
             socket.off('connect');
+            socket.off('disconnect');
             socket.off('themes');
-        };            
-
+        };
     }, []);
 
     useEffect(() => {
-        socket.on('questions', (data) => {
-            console.log('Questions reçues:', data);
-            console.log('Nombre de questions reçues:', data.length);
-            setQuestions(data);
-            setCurrentQuestionIndex(0);
-            setCountchrono(10);
-        });
-
-        return () => {
-            socket.off('questions');
-        };
-    }, [questions]);
-
-    useEffect(() => {
         socket.on('answerResult', (result) => {
-            console.log('Résultat reçu:', result);
-            console.log('Question ID:', result.questionId);
-            console.log('Réponse donnée:', result.answer);
-            console.log('Est correct:', result.correct);
-            
-            setAnswerColors(prev => {
-                const newColors = {
+            setAnswerResult(result);
+            if (result.correct) {
+                setScores(prev => ({
                     ...prev,
-                    [result.questionId]: {
-                        color: result.correct ? 'success' : 'danger',
-                        answeredButton: result.answer
-                    }
-                };
-                console.log('Nouveau state answerColors:', newColors);
-                return newColors;
-            });
-
-            console.log('Index actuel:', currentQuestionIndex);
-            console.log('Nombre total de questions:', questions.length);
-
-            if (currentQuestionIndex <= questions.length - 1) {
-                setCountdown(1);
-            } else {
-                alert('Quiz terminé !');
+                    [userName]: (prev[userName] || 0) + 1
+                }));
             }
+        });
+
+        return () => socket.off('answerResult');
+    }, [userName]);
+
+    useEffect(() => {
+        socket.on('gameStarted', ({ questions, total }) => {
+            console.log('Jeu démarré avec', total, 'questions');
+            setGameState('playing');
+            setCurrentQuestion(questions);
+            setTotalQuestions(total);
+        });
+
+        socket.on('error', (message) => {
+            console.error('Erreur reçue:', message);
+            setError(message);
+        });
+
+        socket.on('nextQuestion', ({ question, index }) => {
+            setCurrentQuestion(question);
+            setQuestionIndex(index);
+            setSelectedAnswer(null);
+            setAnswerResult(null);
+            setTimeLeft(10);
+        });
+
+        socket.on('playerJoined', (playersList) => {
+            console.log('Joueur rejoint:', playersList);
+            setPlayers(playersList);
+        });
+
+        socket.on('playerLeft', (playersList) => {
+            console.log('Joueur parti:', playersList);
+            setPlayers(playersList);
         });
 
         return () => {
-            socket.off('answerResult');
+            socket.off('gameStarted');
+            socket.off('error');
+            socket.off('nextQuestion');
+            socket.off('playerJoined');
+            socket.off('playerLeft');
         };
-    }, [questions, currentQuestionIndex]);
+    }, []);
 
     useEffect(() => {
-        if (countdown > 0) {
-            const timer = setInterval(() => {
-                setCountdown(prev => prev - 1);
+        let timer;
+        if (gameState === 'playing' && timeLeft > 0 && !selectedAnswer) {
+            timer = setInterval(() => {
+                setTimeLeft(prev => {
+                    if (prev <= 1) {
+                        handleAnswer(0); // 0 pour indiquer pas de réponse
+                        return 0;
+                    }
+                    return prev - 1;
+                });
             }, 1000);
-            return () => clearInterval(timer);
-        } else if (countdown === 0) {
-            if (!questions.length) {
-                socket.emit('requestQuestions', { themeId: selectedTheme });
-            } else {
-                setCurrentQuestionIndex(prev => prev + 1);
-                setCountchrono(10);
-            }
         }
-    }, [countdown, selectedTheme, questions]);
 
-    useEffect(() => {
-        if (countchrono > 0) {
-            const timer = setInterval(() => {
-                setCountchrono(prev => prev - 1);
-            }, 1000);
-            return () => clearInterval(timer);
-        } else if (countchrono === 0) {
-            setCurrentQuestionIndex(prev => prev + 1);
-        }
-    }, [countchrono]);
+        return () => clearInterval(timer);
+    }, [gameState, timeLeft, selectedAnswer, handleAnswer]);
 
-    const handleThemeSelect = (themeId) => {
-        console.log('Thème sélectionné:', themeId);
-        setSelectedTheme(themeId);
-        setCountdown(3);
-    };
+    // Composants de rendu
+    const renderLogin = () => (
+        <Card className="my-4">
+            <CardBody>
+                <h2>Connexion</h2>
+                <Input 
+                    value={userName} 
+                    onChange={(e) => setUserName(e.target.value)} 
+                    placeholder="Nom d'utilisateur" 
+                />
+                <Button 
+                    className="mt-4"
+                    onPress={() => setGameState('setup')}
+                    disabled={!userName.trim()}
+                >
+                    Continuer
+                </Button>
+            </CardBody>
+        </Card>
+    );
 
-    const handleAnswer = (questionId, answer) => {
-        console.log('Réponse soumise:', { questionId, answer });
-        socket.emit('submitAnswer', {
-            questionId,
-            answer
-        });
-    };
+    const renderSetup = () => (
+        <Card className="my-4">
+            <CardBody>
+                <h2>Configuration de la partie</h2>
+                <div className="flex gap-4 my-4">
+                    <Button 
+                        color="primary"
+                        onPress={() => {
+                            const newCode = Math.random().toString(36).substring(7).toUpperCase();
+                            setRoomCode(newCode);
+                            setIsHost(true);
+                            setGameState('waiting');
+                        }}
+                    >
+                        Créer une partie
+                    </Button>
+                    <div className="flex-1">
+                        <Input
+                            label="Code de la partie"
+                            value={roomCode}
+                            onChange={(e) => setRoomCode(e.target.value)}
+                        />
+                    </div>
+                    <Button 
+                        color="secondary"
+                        onPress={() => {
+                            if (roomCode) {
+                                setGameState('waiting');
+                            }
+                        }}
+                    >
+                        Rejoindre
+                    </Button>
+                </div>
+            </CardBody>
+        </Card>
+    );
 
-    return (
-        <div className="max-w-4xl mx-auto p-4">
-            <h1 className="text-4xl font-bold mb-4">Quiz en temps réel</h1>
-            <Badge color={connected ? "success" : "danger"}>
-                {connected ? 'Connecté' : 'Déconnecté'}
-            </Badge>
+    const renderWaitingRoom = () => (
+        <Card className="my-4">
+            <CardBody>
+                <h2 className="text-2xl mb-4">Salle d'attente</h2>
+                <div className="bg-gray-100 p-4 rounded my-4">
+                    <p>Code de la partie : {roomCode}</p>
+                </div>
 
-            {/* Debug info */}
-            <Card className="my-4">
-                <CardBody>
-                    <p>Nombre de thèmes: {themes.length}</p>
-                    <p>Thème sélectionné: {selectedTheme}</p>
-                    <p>Nombre de questions: {questions.length}</p>
-                </CardBody>
-            </Card>
-
-            {/* Sélection du thème */}
-            {themes.length > 0 && !selectedTheme && (
-                <Card className="my-4">
-                    <CardBody>
-                        <h2 className="text-2xl font-bold mb-4">Choisissez un thème</h2>
-                        <div className="grid grid-cols-2 gap-4">
-                            {themes.map(theme => (
-                                <Button 
+                {isHost && (
+                    <div className="my-4">
+                        <h3 className="text-xl mb-2">Sélectionner un thème :</h3>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            {Array.isArray(themes) && themes.map((theme) => (
+                                <Button
                                     key={theme.id}
+                                    color={selectedTheme === theme.id ? "primary" : "default"}
                                     onPress={() => handleThemeSelect(theme.id)}
-                                    color="primary"
+                                    className="text-center p-4"
                                 >
                                     {theme.nom_theme}
                                 </Button>
                             ))}
                         </div>
-                    </CardBody>
-                </Card>
-            )}
 
-            {/* Questions */}
-            {selectedTheme && questions[currentQuestionIndex] && (
-                <>
-                    <Card key={questions[currentQuestionIndex].id} className="my-4">
-                        <CardBody>
-                            <h3 className="text-xl font-bold mb-4">{questions[currentQuestionIndex].question}</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                {[1, 2, 3, 4].map((num) => (
-                                    <Button
-                                        key={num}
-                                        onPress={() => handleAnswer(questions[currentQuestionIndex].id, num)}
-                                        isDisabled={answerColors[questions[currentQuestionIndex].id] !== undefined}
-                                        color={answerColors[questions[currentQuestionIndex].id]?.answeredButton === num 
-                                            ? answerColors[questions[currentQuestionIndex].id]?.color 
-                                            : "default"
-                                        }
-                                        className="w-full"
-                                    >
-                                        {questions[currentQuestionIndex][`reponse${num}`]}
-                                    </Button>
-                                ))}
-                            </div>
-                        </CardBody>
-                    </Card>
+                        <Button 
+                            color="primary"
+                            className="mt-4 w-full"
+                            onPress={handleStartGame}
+                            disabled={!selectedTheme}
+                        >
+                            Démarrer la partie
+                        </Button>
+                    </div>
+                )}
 
-                    {countchrono > 0 && questions.length > 0 && (
-                        <div className="flex justify-center items-center mt-[50px]">
-                            <Badge 
-                                content={countchrono} 
-                                size="lg"
-                                color="primary"
-                                className="text-4xl p-6"
-                                variant="shadow"
-                            >
+                <div className="mt-4">
+                    <h3 className="text-xl mb-2">Joueurs connectés :</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        {players.map((player, index) => (
+                            <Badge key={index} color={player.isHost ? "primary" : "default"}>
+                                {player.name} {player.isHost && "(Hôte)"}
                             </Badge>
-                        </div>
-                    )}
-                </>
-            )}
+                        ))}
+                    </div>
+                </div>
+            </CardBody>
+        </Card>
+    );
 
-            {/* Décompte initial (3,2,1) */}
-            {countdown > 0 && !questions.length && (
-                <div className="flex justify-center items-center min-h-[200px]">
-                    <Badge 
-                        content={countdown} 
-                        size="lg"
-                        color="primary"
-                        className="text-6xl p-8"
-                        variant="shadow"
-                    >
-                    </Badge>
+    const renderGame = () => (
+        <Card className="my-4">
+            <CardBody>
+                <div className="flex justify-between items-center mb-4">
+                    <Badge content={`Question ${questionIndex + 1}/${totalQuestions}`} />
+                    <Badge content={`Temps: ${timeLeft}s`} color={timeLeft < 5 ? "danger" : "primary"} />
+                    <Badge content={`Score: ${scores[userName] || 0}`} />
+                </div>
+                {currentQuestion && (
+                    <>
+                        <h3 className="text-xl mb-4">{currentQuestion.question}</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            {[1, 2, 3, 4].map((num) => (
+                                <Button
+                                    key={num}
+                                    color={answerResult?.answer === num ? 
+                                        (answerResult.correct ? "success" : "danger") 
+                                        : "default"}
+                                    onPress={() => handleAnswer(num)}
+                                    disabled={selectedAnswer !== null}
+                                >
+                                    {currentQuestion[`reponse${num}`]}
+                                </Button>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </CardBody>
+        </Card>
+    );
+
+    // Rendu principal
+    return (
+        <div className="max-w-4xl mx-auto p-4">
+            <Badge color={connected ? "success" : "danger"}>
+                {connected ? 'Connecté' : 'Déconnecté'}
+            </Badge>
+
+            {error && (
+                <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+                    {error}
                 </div>
             )}
+
+            {gameState === 'login' && renderLogin()}
+            {gameState === 'setup' && renderSetup()}
+            {gameState === 'waiting' && renderWaitingRoom()}
+            {gameState === 'playing' && renderGame()}
         </div>
     );
 }
 
-export default Quiz; 
+export default Quiz;
