@@ -92,12 +92,18 @@ function Quiz() {
             }
         });
 
+        socket.on('gameState', (state) => {
+            console.log('🎮 État du jeu mis à jour:', state);
+            setGameState(state);
+        });
+
         return () => {
             socket.off('connect');
             socket.off('disconnect');
             socket.off('themes');
             socket.off('playerUpdate');
             socket.off('joinConfirmed');
+            socket.off('gameState');
         };
     }, []);
 
@@ -106,6 +112,10 @@ function Quiz() {
             setGameState('playing');
             setCurrentQuestion(questions);
             setTotalQuestions(total);
+            setQuestionIndex(0);
+            setSelectedAnswer(null);
+            setAnswerResult(null);
+            setTimeLeft(10);
         });
 
         socket.on('error', (message) => {
@@ -121,10 +131,16 @@ function Quiz() {
             setTimeLeft(10);
         });
 
+        socket.on('gameOver', (finalScores) => {
+            setGameState('gameOver');
+            setScores(finalScores);
+        });
+
         return () => {
             socket.off('gameStarted');
             socket.off('error');
             socket.off('nextQuestion');
+            socket.off('gameOver');
         };
     }, []);
 

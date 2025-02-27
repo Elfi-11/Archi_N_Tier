@@ -45,6 +45,17 @@ module.exports = (io) => {
             // Envoyer la mise à jour à tous les clients dans la salle
             io.to(roomCode).emit('playerUpdate', players);
             
+            // Si la partie est déjà en cours, synchroniser le nouveau joueur
+            const gameState = gameStates.get(roomCode);
+            if (gameState && gameState.questions) {
+                // Envoyer l'état actuel du jeu
+                socket.emit('gameState', 'playing');
+                socket.emit('gameStarted', {
+                    questions: gameState.questions[gameState.currentIndex],
+                    total: gameState.questions.length
+                });
+            }
+            
             // Si c'est l'hôte, on envoie les thèmes immédiatement après la confirmation
             if (isHost) {
                 try {
@@ -114,18 +125,21 @@ module.exports = (io) => {
                     return;
                 }
 
-                // Sauvegarder l'état du jeu pour cette salle
+                // Sauvegarder l'état du jeu
                 gameStates.set(roomCode, {
                     questions,
                     currentIndex: 0,
                     scores: {}
                 });
 
-                // Envoyer la première question
-                socket.emit('gameStarted', {
+                // Envoyer la première question à tous les joueurs de la salle
+                io.to(roomCode).emit('gameStarted', {
                     questions: questions[0],
                     total: questions.length
                 });
+                
+                // Mettre à jour l'état du jeu pour tous les joueurs
+                io.to(roomCode).emit('gameState', 'playing');
             } catch (error) {
                 console.error('❌ Erreur jeu:', error);
                 socket.emit('error', 'Erreur lors du démarrage du jeu');
@@ -152,26 +166,24 @@ module.exports = (io) => {
                     answer
                 });
 
-                // Attendre un peu avant de passer à la question suivante
                 setTimeout(() => {
                     const gameState = gameStates.get(roomCode);
                     if (gameState) {
                         gameState.currentIndex++;
                         
-                        // S'il reste des questions
                         if (gameState.currentIndex < gameState.questions.length) {
-                            const nextQuestion = gameState.questions[gameState.currentIndex];
+                            // Envoyer la question suivante à tous les joueurs
                             io.to(roomCode).emit('nextQuestion', {
-                                question: nextQuestion,
+                                question: gameState.questions[gameState.currentIndex],
                                 index: gameState.currentIndex
                             });
                         } else {
-                            // Fin du jeu
+                            // Fin du jeu pour tous les joueurs
                             io.to(roomCode).emit('gameOver', gameState.scores);
                             gameStates.delete(roomCode);
                         }
                     }
-                }, 2000); // Attendre 2 secondes avant la prochaine question
+                }, 2000);
 
             } catch (error) {
                 console.error('❌ Erreur réponse:', error);
