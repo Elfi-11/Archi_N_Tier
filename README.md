@@ -1,25 +1,45 @@
-# Quiz en Temps Réel
+# Quiz Master - Application de Quiz en Temps Réel
 
 ## Description
-Application de quiz en temps réel permettant aux utilisateurs de répondre à des questions sur différents thèmes. Les réponses sont évaluées instantanément et les scores sont calculés en fonction du temps de réponse.
+Application de quiz en temps réel permettant aux utilisateurs de répondre à des questions sur différents thèmes. Les réponses sont évaluées instantanément et les scores sont calculés en fonction du temps de réponse, avec un système de points dynamique qui récompense la rapidité.
+
+## Fonctionnalités
+
+- **Interface responsive** adaptée à tous les écrans
+- **Système de salles** permettant à plusieurs joueurs de s'affronter
+- **Sélection de thèmes** pour personnaliser chaque partie
+- **Système de points dynamique** basé sur le temps de réponse (20 secondes pour respecter la notation):
+  - 10 points pour une réponse correcte dans les 5 premières secondes
+  - 5 points pour une réponse correcte entre 5 et 10 secondes
+  - 2 points pour une réponse correcte après 10 secondes et avant la fin du temps
+  - 0 point pour une réponse incorrecte
+- **Barre de progression animée** indiquant le temps restant
+- **Affichage des scores en temps réel**
+- **Écran de fin de partie** avec classement et célébration du gagnant
+- **Animation de confettis** pour le vainqueur
 
 ## Stack Technique
 
 ### Frontend (Port 3000)
 - **React** : Bibliothèque JavaScript pour construire l'interface utilisateur
-  - Gère l'état de l'application avec useState et useEffect
-  - Affiche les questions et réponses de manière dynamique
-  - Gère l'interaction utilisateur et les événements
-  - Communique avec le backend via Socket.IO Client
+  - Gestion d'état avec useState, useEffect et useCallback
+  - Composants fonctionnels et hooks personnalisés
+  - Affichage dynamique des questions et réponses
+- **NextUI** : Bibliothèque de composants UI modernes
+- **TailwindCSS** : Framework CSS utilitaire pour le styling
+- **Socket.IO Client** : Communication en temps réel avec le serveur
+- **Framer Motion** : Animations fluides de l'interface
 
 ### Backend (Port 3001)
+- **Node.js** : Environnement d'exécution JavaScript côté serveur
+- **Express** : Framework web minimaliste
 - **Socket.IO** : Bibliothèque pour la communication en temps réel
-  - Permet la communication bidirectionnelle client-serveur
-  - Gère les événements en temps réel :
+  - Gestion des événements en temps réel :
     * Connexion/déconnexion des joueurs
     * Envoi des questions
-    * Réception des réponses
-    * Mise à jour des scores
+    * Réception et évaluation des réponses
+    * Calcul et mise à jour des scores
+    * Synchronisation du timer entre tous les joueurs
   - Maintient une connexion persistante avec les clients
 
 ### Base de données
@@ -36,17 +56,11 @@ Application de quiz en temps réel permettant aux utilisateurs de répondre à d
 
 ### ORM et Middleware
 - **Knex.js** : Query builder SQL
-  - Gère les migrations de base de données :
-    * Création des tables
-    * Modifications de structure
+  - Gère les migrations de base de données
   - Simplifie les requêtes SQL avec une API JavaScript
   - Permet le seeding des données de test
-  - Organise la structure de la base de données
-
 - **CORS** : Middleware de sécurité
   - Permet la communication cross-origin entre frontend et backend
-  - Configure les autorisations d'accès HTTP
-  - Essentiel car frontend (3000) et backend (3001) sur des ports différents
 
 ## 🔧 Installation
 
@@ -84,16 +98,23 @@ npm start
 
 ## 🌐 Utilisation
 1. Ouvrez votre navigateur et accédez à `http://localhost:3000`
-2. L'API backend est accessible sur `http://localhost:3001`
-3. Les endpoints disponibles :
-   - GET `/api/questions` : Liste toutes les questions
-   - GET `/api/questions/:id` : Récupère une question spécifique
+2. Entrez votre nom d'utilisateur
+3. Créez une nouvelle partie ou rejoignez une partie existante avec un code
+4. Si vous êtes l'hôte, sélectionnez un thème et démarrez la partie
+5. Répondez aux questions le plus rapidement possible pour maximiser vos points
+6. Consultez le classement final à la fin de la partie
 
 ## 🔌 Socket.IO Events
 - `connection` : Établit la connexion avec le serveur
-- `requestQuestions` : Demande la liste des questions
+- `joinRoom` : Rejoint ou crée une salle de jeu
+- `playerUpdate` : Mise à jour de la liste des joueurs
+- `requestQuestions` : Demande la liste des questions pour un thème
+- `startGame` : Démarre la partie
 - `submitAnswer` : Soumet une réponse
 - `answerResult` : Reçoit le résultat d'une réponse
+- `timeUpdate` : Mise à jour du temps restant
+- `nextQuestion` : Passage à la question suivante
+- `gameOver` : Fin de la partie et affichage des scores
 
 ## 🤝 Contribution
 Les contributions sont les bienvenues ! Pour contribuer :
@@ -112,3 +133,4 @@ Marina Estanco - [GitHub](https://github.com/Elfi-11)
 ## 🙏 Remerciements
 - Merci à tous les contributeurs
 - Inspiré par les meilleures pratiques de développement web moderne
+- Projet réalisé dans le cadre du cours Architecture N-Tiers

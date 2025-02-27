@@ -8,6 +8,7 @@
 
 .quiz-container {
     max-width: 800px;
+    width: 100%;
     margin: 0 auto;
     padding: 20px;
 }
@@ -62,4 +63,428 @@
 
 .answer-button:hover {
     background-color: #e9ecef;
+}
+
+/* Styles personnalisés pour le Quiz */
+
+/* Animation de pulsation pour les éléments importants */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Animation de fondu pour les transitions */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Animation de rebond pour les boutons */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Styles généraux */
+.quiz-container {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.5s ease-in-out;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Optimisation pour écran partagé */
+@media (max-width: 1200px) {
+  .quiz-container {
+    max-width: 95%;
+    padding: 1rem;
+  }
+}
+
+.quiz-title {
+  color: #4a4a4a;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  position: relative;
+  font-size: 1.5rem;
+}
+
+.quiz-title::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+/* Styles pour les cartes */
+.quiz-card {
+  border: none !important;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.quiz-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour les boutons */
+.quiz-btn {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.quiz-btn:hover {
+  transform: translateY(-2px);
+}
+
+.quiz-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  z-index: -1;
+}
+
+.quiz-btn:hover::after {
+  transform: translateX(100%);
+  transition: all 0.7s ease;
+}
+
+/* Styles pour les badges */
+.quiz-badge {
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  min-width: 120px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  position: static;
+}
+
+.quiz-badge:hover {
+  transform: none;
+}
+
+/* Styles pour les questions */
+.question-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.question-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+/* Styles pour les réponses */
+.answer-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  background-color: #f8f9fa;
+  padding: 0.75rem !important;
+  height: auto !important;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal !important;
+  word-break: break-word;
+}
+
+.answer-btn:hover {
+  transform: translateY(-3px);
+  border-color: #667eea;
+}
+
+.answer-btn.selected {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  animation: pulse 1s infinite;
+}
+
+.answer-btn.correct {
+  background: linear-gradient(90deg, #84fab0 0%, #8fd3f4 100%);
+  color: #333;
+}
+
+.answer-btn.incorrect {
+  background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 100%);
+  color: #333;
+}
+
+/* Styles pour le timer */
+.timer-container {
+  margin-bottom: 1.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.timer-progress {
+  height: 12px !important;
+  border-radius: 6px !important;
+  overflow: hidden;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.timer-text {
+  font-weight: 600;
+  text-align: center;
+  margin-top: 0.5rem;
+  color: #555;
+}
+
+/* Responsive pour le timer */
+@media (min-width: 768px) {
+  .timer-progress {
+    height: 14px !important;
+    border-radius: 7px !important;
+  }
+}
+
+@media (min-width: 1200px) {
+  .timer-progress {
+    height: 16px !important;
+    border-radius: 8px !important;
+  }
+}
+
+/* Styles pour la salle d'attente */
+.waiting-room {
+  text-align: center;
+}
+
+.room-code {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: #667eea;
+  margin: 1rem 0;
+  animation: pulse 2s infinite;
+}
+
+.player-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 1.5rem 0;
+}
+
+.player-item {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.player-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles pour les résultats */
+.results-container {
+  text-align: center;
+}
+
+.winner-name {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #f7b733;
+  margin: 1rem 0;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  animation: bounce 2s infinite;
+  word-break: break-word;
+}
+
+.score-list {
+  margin: 2rem 0;
+}
+
+.score-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 10px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.score-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.score-item.winner {
+  background: linear-gradient(90deg, #ffe259 0%, #ffa751 100%);
+  color: white;
+}
+
+/* Styles pour la modal */
+.winner-modal {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.modal-header {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.trophy-icon {
+  font-size: 4rem;
+  color: #f7b733;
+  animation: bounce 2s infinite;
+  margin: 1rem 0;
+  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Styles pour les thèmes */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  margin: 1.5rem 0;
+}
+
+@media (max-width: 1200px) {
+  .theme-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
+.theme-btn {
+  padding: 0.75rem;
+  border-radius: 10px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  height: auto !important;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: normal !important;
+  word-break: break-word;
+  font-size: 1rem;
+}
+
+.theme-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.theme-btn.selected {
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* Styles pour les messages d'attente */
+.waiting-message {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  animation: pulse 2s infinite;
+}
+
+/* Styles pour les animations de transition */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 500ms;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 500ms;
+}
+
+/* Optimisations pour écran partagé */
+@media (max-width: 1200px) {
+  .quiz-title {
+    font-size: 1.3rem;
+  }
+  
+  .question-text {
+    font-size: 1.1rem;
+  }
+  
+  .trophy-icon {
+    font-size: 3rem;
+  }
+  
+  .winner-name {
+    font-size: 1.8rem;
+  }
+  
+  .room-code {
+    font-size: 1.3rem;
+  }
+  
+  .quiz-badge {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  
+  .answer-btn {
+    font-size: 0.9rem;
+  }
 }
