@@ -1,4 +1,4 @@
-# Quiz Master - Application de Quiz en Temps Réel
+# Quiz Master - Application de Quiz en Temps Réel par Marina Estanco
 
 ## Description
 Application de quiz en temps réel permettant aux utilisateurs de répondre à des questions sur différents thèmes. Les réponses sont évaluées instantanément et les scores sont calculés en fonction du temps de réponse, avec un système de points dynamique qui récompense la rapidité.
