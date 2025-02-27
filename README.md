@@ -85,12 +85,23 @@ npm start
 # Naviguer vers le dossier frontend
 cd front
 
-# Installer les dépendances
+# Installer les dépendances de base
 npm install
 
-# Installer Nextui et Tailwind
+# Installer NextUI, Framer Motion et TailwindCSS
 npm install @nextui-org/react framer-motion
+
+# Installer les confettis pour l'animation du gagnant
+npm install react-confetti
+
+# Installer Socket.IO client pour la communication en temps réel
+npm install socket.io-client
+
+# Installer les dépendances de développement
 npm install -D tailwindcss postcss autoprefixer
+
+# Initialiser TailwindCSS si ce n'est pas déjà fait
+npx tailwindcss init -p
 
 # Démarrer l'application React
 npm start
@@ -116,21 +127,7 @@ npm start
 - `nextQuestion` : Passage à la question suivante
 - `gameOver` : Fin de la partie et affichage des scores
 
-## 🤝 Contribution
-Les contributions sont les bienvenues ! Pour contribuer :
-1. Forkez le projet
-2. Créez une branche pour votre fonctionnalité
-3. Committez vos changements
-4. Poussez vers la branche
-5. Ouvrez une Pull Request
-
-## 📝 License
-Ce projet est sous licence ISC.
 
 ## 📞 Contact
 Marina Estanco - [GitHub](https://github.com/Elfi-11)
 
-## 🙏 Remerciements
-- Merci à tous les contributeurs
-- Inspiré par les meilleures pratiques de développement web moderne
-- Projet réalisé dans le cadre du cours Architecture N-Tiers
