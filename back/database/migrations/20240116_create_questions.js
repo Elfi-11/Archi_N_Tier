@@ -7,6 +7,11 @@ exports.up = function(knex) {
     table.string('reponse3').notNullable();
     table.string('reponse4').notNullable();
     table.integer('bonne_reponse').notNullable();
+    table.integer('theme_id')
+      .unsigned()
+      .references('id')
+      .inTable('themes')
+      .onDelete('SET NULL');
   });
 };
 

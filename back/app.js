@@ -1,18 +1,20 @@
 const knex = require('knex');
 const config = require('./knexfile');
 
-console.log('Initialisation de la connexion à la base de données...');
+let db;
 
-const db = knex(config.development);
-
-// Test de la connexion
-db.raw('SELECT 1')
-.then(() => {
-    console.log('Connexion à la base de données réussie!');
-})
-.catch((error) => {
-    console.error('Erreur de connexion à la base de données:', error);
-});
+try {
+    db = knex(config.development);
+    
+    // Test de connexion immédiat avec async/await
+    (async () => {
+        await db.raw('SELECT 1');
+        console.log('✅ Base de données connectée');
+    })();
+} catch (error) {
+    console.error('❌ Erreur de connexion BD:', error);
+    process.exit(1); // Arrêter l'application si la BD n'est pas accessible
+}
 
 module.exports = db;
 
